@@ -1,0 +1,30 @@
+{
+  "name": "versusGame",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/grp-chat/versusGame.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/grp-chat/versusGame/issues"
+  },
+  "homepage": "https://github.com/grp-chat/versusGame#readme",
+  "dependencies": {
+    "express": "^4.17.3",
+    "gridjs": "^5.0.2",
+    "socket.io": "^4.4.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  }
+}
