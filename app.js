@@ -20,7 +20,9 @@ console.log("Server listening at " + PORT);
 //------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------
 const { Player } = require('./player');
-
+const { Item } = require('./item');
+const { TeamObjects } = require('./TeamObjects');
+const { AllMatrixes } = require('./maps');
 //------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------
 
@@ -43,7 +45,7 @@ const getLockIdFromPassword = password => {
 class MainSystem {
     constructor() {
         //this.extraArr = ["TCR", "LOK", "LK", "JHA", "JV", "CJH", "SZF", "JHA", "TJY", "KX"];
-        this.extraArr = ["TCR", "JX", "JZ", "TWN", "LJY", "ELI", "CUR", "LSH", "CT", "LK", "JV"];
+        this.studentIdArr = ["TCR", "JX", "JZ", "TWN", "LJY", "ELI", "CUR", "LSH", "CT", "LK", "JV"];
         //this.extraArr = ["TCR", "CUR", "CT", "ELI", "JZ", "LJY", "TWN", "RYD", "JX", "LK", "JV"];
         // this.extraArr = ["TCR", "LOK", "JHA", "KN", "JT", "CJH", "CED", "KX", "TJY", "LSH", "SZF"];
         //this.studentIdArr = ["TCR", "LOK", "JHA", "KN", "JT", "CJH", "CED", "KX", "TJY", "RYD", "SZF"];
