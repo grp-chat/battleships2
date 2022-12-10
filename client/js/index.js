@@ -333,6 +333,7 @@ function checkifUserCanClickThisMap(teamMap, turnsPlayerTeam) {
         "Blue": "blue",
     }
 
+    if (nickname === "TCR") return true;
     if(teamMap === settings[turnsPlayerTeam]) return false;
     return true;
 }
@@ -504,103 +505,6 @@ sock.on('chat-to-clients', data => {
     // }
     appendMessage(message);
 });
-sock.on('createChatObject', data => {
-    // if (matrixAreaRenderingHere === data.area) { 
-    // }
-    
-    
-    const getChatObject = chatObjectsArr.find(chatObj => chatObj.id === data.id);
-    // console.log(chatObjectsArr.length);
-    if (!getChatObject) {
-        const chatObject = new ChatObject({ x: data.x, y: data.y, message: data.message, id: data.id, matrixHeight: data.matrixHeight, matrixLength: data.matrixLength});
-        chatObject.typeWriter();
-        chatObjectsArr.push(chatObject);
-    } else {
-
-        //const { id, message, matrixHeight, matrixLength, ...updatingValues } = data;
-        const index = chatObjectsArr.indexOf(getChatObject);
-        chatObjectsArr[index].x = data.x;
-        chatObjectsArr[index].y = data.y;
-        //chatObjectsArr[index] = { ...chatObjectsArr[index], ...updatingValues}
-
-        chatObjectsArr[index].text = data.message;
-        //chatObjectsArr[index].area = data.area;
-        chatObjectsArr[index].i = 1;
-        chatObjectsArr[index].char = "";
-        chatObjectsArr[index].typeWriter();
-    }
-});
-sock.on('clearChatObject', data => {
-    const getChatObject = chatObjectsArr.find(chatObj => chatObj.id === data.id);
-    chatObjectsArr.splice(chatObjectsArr.indexOf(getChatObject), 1);
-    sock.emit('refreshCanvas');
-});
-sock.on('missionObject', data => {
-    missionObjectArr = [];
-    const getNum = data;
-    const mission = missions[getNum];
-    const missionObject = new ChatObject({ message2: mission });
-    missionObject.typeWriterLarge();
-    missionObjectArr.push(missionObject);
-    sock.emit('refreshCanvas');
-});
-sock.on('onScreen', data => {
-    missionObjectArr = [];
-    const missionObject = new ChatObject({ message2: data });
-    missionObject.typeWriterLarge();
-    missionObjectArr.push(missionObject);
-    sock.emit('refreshCanvas');
-});
-
-sock.on('loadMatrix', (data) => {
-
-    const { extraArr } = data;
-    studentsArr = extraArr;
-
-    clientRender(data);
-
-    // const timerObject = new ChatObject({ message: "" });
-    // timerObject.runTimer();
-
-    missionObjectArr.forEach(mission => {
-        mission.justPrintLarge();
-    });
-    
-});
-
-sock.on('sendMatrix', (data) => {
-
-    canvasElements = document.querySelectorAll("canvas");
-    canvasElements.forEach((canvas) => {
-        canvas.remove();
-    });
-
-    clientRender(data); 
-
-    chatObjectsArr.forEach(chatObj => {
-        const getPlayerObject = data.playersArr.find(object => object.id === chatObj.id);
-        
-        chatObj.x = getPlayerObject.x;
-        chatObj.y = getPlayerObject.y;
-        chatObj.area = getPlayerObject.area;
-        if (matrixAreaRenderingHere === chatObj.area) {
-            chatObj.justPrint();
-        }
-    });
-    missionObjectArr.forEach(mission => {
-        mission.justPrintLarge();
-    });
-
-    //const timerObject = new ChatObject({ message: "" });
-    //timerObject.runTimer();
-    
-    // typeWriterRender();
-});
-
-sock.on('updatePowerArray', data => {
-    
-    loadObtainedPowersToModal(data.obtainedPowers, data.getTeam, data.getAwardedSteps);
-});
 
 sock.on('emitToAllUsersTheClickedCell', data => {
     if (data === null) return;
@@ -680,6 +584,37 @@ sock.on('updateTargetMapAtClient', data => {
     }
 
     
+});
+
+sock.on('updateMapIfRefreshed', data => {
+    data.allHits["red"].forEach(coord => {
+        document.getElementById(`red${coord}`).innerHTML = "";
+        const img = document.createElement('img');
+        img.src = "https://cdn1.iconfinder.com/data/icons/food-4-9/128/Vigor_Fire-Hot-Flame-Burn-256.png";
+        img.style = "width:30px;height:30px";
+        document.getElementById(`red${coord}`).appendChild(img);
+    });
+    data.allHits["blue"].forEach(coord => {
+        document.getElementById(`blue${coord}`).innerHTML = "";
+        const img = document.createElement('img');
+        img.src = "https://cdn1.iconfinder.com/data/icons/food-4-9/128/Vigor_Fire-Hot-Flame-Burn-256.png";
+        img.style = "width:30px;height:30px";
+        document.getElementById(`blue${coord}`).appendChild(img);
+    });
+    data.allMisses["red"].forEach(coord => {
+        document.getElementById(`red${coord}`).innerHTML = "";
+        const img = document.createElement('img');
+        img.src = "https://cdn2.iconfinder.com/data/icons/funtime-objects-part-2/60/005_055_delete_cross_close_cancel_exit_vote-1024.png";
+        img.style = "width:30px;height:30px";
+        document.getElementById(`red${coord}`).appendChild(img);
+    });
+    data.allMisses["blue"].forEach(coord => {
+        document.getElementById(`blue${coord}`).innerHTML = "";
+        const img = document.createElement('img');
+        img.src = "https://cdn2.iconfinder.com/data/icons/funtime-objects-part-2/60/005_055_delete_cross_close_cancel_exit_vote-1024.png";
+        img.style = "width:30px;height:30px";
+        document.getElementById(`blue${coord}`).appendChild(img);
+    });
 });
 
 sock.on('revealAllAtClient', data => {

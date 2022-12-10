@@ -45,10 +45,10 @@ const getLockIdFromPassword = password => {
 class MainSystem {
     constructor() {
         //this.extraArr = ["TCR", "LOK", "LK", "JHA", "JV", "CJH", "SZF", "JHA", "TJY", "KX"];
-        this.studentIdArr = ["TCR", "JX", "JZ", "TWN", "LJY", "ELI", "CUR", "LSH", "CT", "LK", "JV"];
+        //this.studentIdArr = ["TCR", "JX", "JZ", "TWN", "LJY", "ELI", "CUR", "LSH", "CT", "LK", "JV"];
         //this.extraArr = ["TCR", "CUR", "CT", "ELI", "JZ", "LJY", "TWN", "RYD", "JX", "LK", "JV"];
         // this.extraArr = ["TCR", "LOK", "JHA", "KN", "JT", "CJH", "CED", "KX", "TJY", "LSH", "SZF"];
-        //this.studentIdArr = ["TCR", "LOK", "JHA", "KN", "JT", "CJH", "CED", "KX", "TJY", "RYD", "SZF"];
+        this.studentIdArr = ["TCR", "LOK", "JHA", "KN", "JT", "CJH", "CED", "KX", "TJY", "RYD", "SZF"];
 
         this.playersArr = [
             this.p1 = new Player({ id: this.studentIdArr[0], deployChance:100 }),
@@ -80,9 +80,18 @@ class MainSystem {
         }
 
         this.shipsLocations = {
-            "red": [20],
-            "blue": [5],
+            "red": [20, 21],
+            "blue": [5, 6],
         }
+        this.allMisses = {
+            "red": [],
+            "blue": [],
+        }
+        this.allHits = {
+            "red": [],
+            "blue": [],
+        }
+        this.resultPending = false;
 
         this.cellLastClicked = null;
 
@@ -111,6 +120,7 @@ io.sockets.on('connection', function (sock) {
 
         sock.id = data; //"TCR"
         io.emit('chat-to-clients', data + " connected");
+        if (!mainSystem.studentIdArr.includes(data)) return;
         mainSystem.connectedUsers.push(data);
 
         io.emit('pushStudentsArr', mainSystem);
@@ -122,6 +132,8 @@ io.sockets.on('connection', function (sock) {
         if (mainSystem.whosTurn === playerObj.id) {
             io.emit('setWhosTurnAtClient', playerObj);
         }
+
+        io.emit('updateMapIfRefreshed', mainSystem);
         
         io.emit('emitToAllUsersTheClickedCell', mainSystem.cellLastClicked);
 
@@ -149,95 +161,6 @@ io.sockets.on('connection', function (sock) {
     sock.on('chat-to-server', (data) => {
         io.emit('chat-to-clients', data);
     });
-    // sock.on('clearChatObject', data => {
-    //     const getPlayerObject = gridSystem.playersArr.find(object => object.id === data);
-        
-    //     const { id } = getPlayerObject;
-    //     io.emit('clearChatObject', id);
-
-    // });
-    // // sock.on('createChatObject', data => {
-    // //     const getPlayerObject = gridSystem.playersArr.find(object => object.id === data.nickname);
-    // //     const message = data.message2;
-        
-    // //     const { x, y, area, id } = getPlayerObject;
-    // //     const matrixHeight = gridSystem.allMatrixes[area].gridMatrix.length;
-    // //     const matrixLength = gridSystem.allMatrixes[area].gridMatrix[0].length;
-    // //     io.emit('createChatObject', { x, y, message, id, matrixHeight, matrixLength });
-        
-    // // });
-    // sock.on('displayMission', data => {
-    //     //const message = "Mission: This is a test mission, testing mission display.............";
-    //     const getNum = data;
-    //     io.emit('missionObject', getNum);
-    // });
-    // sock.on('onScreen', data => {
-    //     io.emit('onScreen', data);
-    // });
-
-    // sock.on('useItem', (data) => {
-        
-    //     const emoji = (data.getNum - 1) * 2;
-    //     const playerId = data.studentId;
-    //     const gridSysPlyrKey = getPlayerObjectKey(playerId);
-    //     const itemLength = gridSystem[gridSysPlyrKey].inventory.length
-    //     if (emoji + 1 > itemLength || itemLength === 0) {
-    //         io.emit('chat-to-clients', `Wrong item slot selection`);
-    //         return
-    //     }
-    //     const remainingItem = gridSystem[gridSysPlyrKey].inventory.slice(0, emoji) + gridSystem[gridSysPlyrKey].inventory.slice(emoji+2, itemLength)
-    //     gridSystem[gridSysPlyrKey].inventory = remainingItem;
-    //     io.emit('chat-to-clients', `${playerId}'s item ${data.getNum} used`);
-    //     gridSystem.emitToUsers('sendMatrix');
-
-    // });
-    // sock.on('restartLevel', () => {
-
-    //     gridSystem.resetMap();
-
-    //     gridSystem.emitToUsers('sendMatrix');
-        
-    // });
-    // sock.on('refreshCanvas', () => {
-    //     gridSystem.emitToUsers('sendMatrix');
-    // });
-
-    // sock.on('goToLevel', (data) => {
-        
-    //     gridSystem.goToLevel(data);
-
-    //     gridSystem.emitToUsers('sendMatrix');
-        
-    // });
-
-    // sock.on('addStepsAll', (data) => {
-        
-    //     gridSystem.playersArr.forEach((player) => {
-    //         var convertToNum = Number(data);
-                
-    //         var message2 = player.id + " added " + convertToNum + " steps succesful!"
-    //         player.steps += convertToNum;
-    //         io.emit('chat-to-clients', message2);
-                
-
-    //         gridSystem.emitToUsers('sendMatrix');
-    //     });
-    // });
-
-    // sock.on('moveAwardedStepsToActualSteps', () => {
-    //     gridSystem.playersArr.forEach((player) => {
-    //         player.steps = player.stepsAwardedBeforeGameStarts;
-    //     });
-    //     gridSystem.emitToUsers('sendMatrix');
-    // });
-
-    // sock.on('setSignTime', data => {
-    //     const getPlayerObject = gridSystem.playersArr.find(object => object.id === data.nickname);
-    //     const { signBoards } = gridSystem.allMatrixes[getPlayerObject.area];
-    //     signBoards[data.num1].sign = `${data.num2} seconds`;
-    //     gridSystem.emitToUsers('sendMatrix');
-    //     //io.emit('setSign', data);
-    // });
 
     sock.on('setPlayerTeam', data => {
         const playerObj = mainSystem.getPlayerObject(data.studentId);
@@ -257,136 +180,13 @@ io.sockets.on('connection', function (sock) {
 
     });
 
-    // sock.on('addAwardedSteps', data => {
-    //     const getPlayerObject = gridSystem.playersArr.find(object => object.id === data.studentId);
-    //     getPlayerObject.stepsAwardedBeforeGameStarts += parseInt(data.getNum);
-    //     const message2 = data.studentId + " awarded " + data.getNum + " steps succesful!"
-    //     io.emit('chat-to-clients', message2);
-    // });
-
-    // sock.on('penalties', data => {
-    //     if (gridSystem.teamObjects.penalties[data.getNum] === undefined) return;
-
-    //     const getPlayerObject = gridSystem.playersArr.find(object => object.id === data.studentId);
-
-    //     getPlayerObject[gridSystem.teamObjects.penalties[data.getNum]]();
-    //     const message2 = `Penalty ${data.studentId} code:${data.getNum}, steps:${getPlayerObject.stepsAwardedBeforeGameStarts} pwrs:${getPlayerObject.obtainedPowers.length}`;
-    //     io.emit('chat-to-clients', message2);
-
-    // });
-
-
+    
     sock.on('swapTeams', () => {
         gridSystem.teamSwap();
         gridSystem.emitToUsers('sendMatrix');
         //console.log("swap activated")
     });
 
-    // sock.on('usePower', data => {
-    //     const playerObjectKey = getPlayerObjectKey(data.playerId);
-    //     const selectedPower = parseInt(data.extractNum) - 1
-
-        
-    //     if(gridSystem[playerObjectKey].obtainedPowers[selectedPower] === undefined) return;
-
-    //     const displayPowerTitle = gridSystem[playerObjectKey].obtainedPowers[selectedPower].title;
-    //     io.emit('chat-to-clients', `${data.playerId} activated ${displayPowerTitle}`);
-
-    //     if (gridSystem[playerObjectKey].obtainedPowers[selectedPower].powerName === "blink") {
-    //         gridSystem[playerObjectKey].blinkActivate = true;
-    //         gridSystem[playerObjectKey].obtainedPowers.splice(selectedPower, 1);
-    //         return;
-    //     }
-
-        
-    //     if(gridSystem[playerObjectKey].canUsePower === false) return;
-
-    //     if (gridSystem[playerObjectKey].obtainedPowers[selectedPower].powerName === "stun") {
-            
-    //         gridSystem[playerObjectKey].obtainedPowers.splice(selectedPower, 1);
-
-    //         //gridSystem.p9.gotStunned();
-    //         gridSystem.playersArr.forEach(player => {
-    //             if (gridSystem[playerObjectKey].id != player.id && gridSystem[playerObjectKey].area === player.area) {
-    //                 const bombRange = 8;
-    //                 const rightRange = gridSystem[playerObjectKey].x + bombRange;
-    //                 const leftRange = gridSystem[playerObjectKey].x - bombRange;
-    //                 const upRange = gridSystem[playerObjectKey].y - bombRange;
-    //                 const downRange = gridSystem[playerObjectKey].y + bombRange;
-
-    //                 if (player.x > leftRange && player.x < rightRange && player.y > upRange && player.y < downRange ) {
-    //                     player.gotStunned();
-    //                     gridSystem.emitToUsers('sendMatrix');
-    //                     //console.log(`${player.id}: x:${player.x}, y:${player.y}, area:${player.area}`)
-    //                 }
-    //             }
-                
-    //         });
-    //         setTimeout(() => {
-    //             gridSystem.emitToUsers('sendMatrix');
-    //         }, 6000);
-
-    //         return;
-    //     }
-
-
-    //     const word = gridSystem[playerObjectKey].obtainedPowers[selectedPower].powerName;
-    //     const wordOff = gridSystem[playerObjectKey].obtainedPowers[selectedPower].offPowerName;
-    //     const duration = gridSystem[playerObjectKey].obtainedPowers[selectedPower].duration;
-        
-    //     //gridSystem[playerObjectKey].callPower(selectedPower);
-    //     gridSystem[playerObjectKey][word]();
-    //     //gridSystem[playerObjectKey].invisibilityOff();
-    //     //console.log(gridSystem[playerObjectKey].obtainedPowers);
-    //     gridSystem.emitToUsers('sendMatrix');
-
-    //     if (gridSystem[playerObjectKey][wordOff] === undefined) return;
-    //     gridSystem[playerObjectKey][wordOff](selectedPower);
-
-    //     setTimeout(() => {
-    //         gridSystem.emitToUsers('sendMatrix');
-    //     }, duration + 1000);
-
-    // });
-
-    // sock.on('grantPower', data => {
-
-    //     const playerObjectKey = getPlayerObjectKey(data.studentId);
-    //     const powerListKey = parseInt(data.getNum);
-
-    //     if (gridSystem[playerObjectKey] === undefined) return;
-    //     if(gridSystem.powerList[powerListKey] === undefined) return;
-    //     gridSystem[playerObjectKey].obtainedPowers.push(gridSystem.powerList[powerListKey]);
-
-    //     const message2 = data.studentId + " awarded power " + data.getNum + " succesful!"
-    //     io.emit('chat-to-clients', message2);
-
-    //     //io.emit('updatePowerArray', gridSystem.playersArr);
-
-    // });
-
-    // sock.on('pushPowerArray', data => {
-    //     const getPlayerObject = gridSystem.playersArr.find(object => object.id === data);
-    //     const obtainedPowers = getPlayerObject.obtainedPowers;
-    //     const getTeam = getPlayerObject.team;
-    //     const getAwardedSteps = getPlayerObject.stepsAwardedBeforeGameStarts;
-    //     const studentId = data; 
-    //     sock.emit('updatePowerArray', { obtainedPowers, getTeam, getAwardedSteps });
-    // });
-
-    // sock.on('eagleEye', data => {
-    //     const getPlayerObject = gridSystem.playersArr.find(object => object.id === data.playerId);
-    //     getPlayerObject.activateEagleEye(data.extractNum);
-    //     gridSystem.emitToUsers('sendMatrix');
-    // });
-
-    // sock.on('deactivateEagleEye', data => {
-    //     const getPlayerObject = gridSystem.playersArr.find(object => object.id === data.playerId);
-    //     getPlayerObject.deactivateEagleEye();
-    //     gridSystem.emitToUsers('sendMatrix');
-    // });
-
-    //-----------------------------------------------------------------------------------------------------
 
     sock.on('clickedGrid', data => {
         mainSystem.cellLastClicked = data;
@@ -394,6 +194,10 @@ io.sockets.on('connection', function (sock) {
     });
 
     sock.on('setWhosTurn', data => {
+        if (mainSystem.resultPending) {
+            io.emit('chat-to-clients', `Failed - Map not updated!`);
+            return;
+        }
         const playerObj = mainSystem.getPlayerObject(data);
         mainSystem.whosTurn = playerObj.id;
         io.emit('setWhosTurnAtClient', playerObj);
@@ -456,16 +260,32 @@ io.sockets.on('connection', function (sock) {
     sock.on('updateTargetMap', data => {
         const {targetCoord, targetMap} = data;
         const shipsLocations = mainSystem.shipsLocations;
+
+        if (mainSystem.shipsLocations[targetMap] === undefined) return;
+
+        if (mainSystem.shipsLocations[targetMap].includes(targetCoord)) {
+            mainSystem.allHits[targetMap].push(targetCoord);
+            
+
+        } else {
+            mainSystem.allMisses[targetMap].push(targetCoord);
+            
+        }
         
         io.emit('updateTargetMapAtClient', { targetCoord, targetMap, shipsLocations });
         mainSystem.shipsLocations[targetMap] = mainSystem.shipsLocations[targetMap].filter(coord => {
             return coord !== targetCoord;
         });
 
+        
+
+        mainSystem.resultPending = false;
+
     });
 
     sock.on('launch', () => {
         sock.emit('pushLocationsToTCR', mainSystem.shipsLocations);
+        mainSystem.resultPending = true;
     });
 
     sock.on('swapTCR', () => {
