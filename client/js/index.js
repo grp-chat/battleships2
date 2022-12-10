@@ -423,8 +423,11 @@ function offSecretMode(mainSystem) {
     }
     
     if (mainSystem.shipsLocations[settings[playerObj.team]] === undefined) return;
-    mainSystem.shipsLocations[settings[playerObj.team]].forEach(coords => {
-        document.getElementById(`${settings[playerObj.team]}${coords}`).innerHTML = coords;
+    mainSystem.shipsLocations["red"].forEach(coords => {
+        document.getElementById(`red${coords}`).innerHTML = coords;
+    });
+    mainSystem.shipsLocations["blue"].forEach(coords => {
+        document.getElementById(`blue${coords}`).innerHTML = coords;
     });
 }
 
