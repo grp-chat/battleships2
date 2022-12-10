@@ -9,11 +9,22 @@ class fixedCommand {
         if (nickname != "TCR") { return }
         if (message.slice(0, this.prefix.length) != this.prefix) { return }
 
+        if (this.sockEmitFlag === 'updateTargetMap') {
+            sock.emit(this.sockEmitFlag, { targetCoord, targetMap });
+            return;
+        }
+        if (this.sockEmitFlag === 'launch') {
+            sock.emit(this.sockEmitFlag, nickname);
+            return;
+        }
+        if (this.sockEmitFlag === 'unDeployShip') {
+            sock.emit(this.sockEmitFlag, { deployShipCoords, deployShipMap, nickname });
+            return;
+        }
+
         sock.emit(this.sockEmitFlag);
 
-        if (this.sockEmitFlag === 'mindControlOff') {
-            sock.emit('chat-to-server', "Mind control mode deactivated");
-        }
+        
 
         //let text = "[" + connectedArr.toString() + "]";
         //sock.emit('chat-to-server', numberOfPlayers);
@@ -26,6 +37,25 @@ class fixedCommand {
             }
         }
 
+
+    }
+}
+class fixedFreeCommand {
+    constructor(prefix, sockEmitFlag) {
+        this.prefix = prefix;
+        this.sockEmitFlag = sockEmitFlag;
+    }
+
+    executeCommand(message) {
+        
+        if (message.slice(0, this.prefix.length) != this.prefix) { return }
+
+        if (this.sockEmitFlag === 'deployShip') {
+            sock.emit(this.sockEmitFlag, { deployShipCoords, deployShipMap, nickname });
+            return;
+        }
+
+        sock.emit(this.sockEmitFlag);
 
     }
 }
@@ -208,8 +238,18 @@ const allCommands = [
     new numAndIdCommand("TCR: set team ", 'setPlayerTeam'),
     new numAndIdCommand("TCR: award steps ", 'addAwardedSteps'),
     new numAndIdCommand("TCR: penal ", 'penalties'),
+    new numAndIdCommand("TCR: add chance ", 'addChance'),
     new messageCommand("TCR: on screen ", 'onScreen'),
     new fixedCommand("TCR: swap teams", 'swapTeams'),
+    new fixedCommand("TCR: call locations", 'callLocations'),
+    new fixedCommand("TCR: swap TCR", 'swapTCR'),
+    new fixedCommand("TCR: secret mode", 'secretMode'),
+    new fixedCommand("TCR: off secret mode", 'offSecretMode'),
+    new fixedCommand("TCR: result", 'updateTargetMap'),
+    new fixedCommand("TCR: launch missile", 'launch'),
+    new fixedCommand("TCR: reveal all ships", 'revealAll'),
+    new fixedFreeCommand(nickname + ": deploy", 'deployShip'),
+    new fixedCommand("TCR: undeploy", 'unDeployShip'),
     new fixedCommand("TCR: mind control off", 'mindControlOff'),
     new fixedCommand("TCR: game start", 'moveAwardedStepsToActualSteps'),
     new fixedCommand("TCR: go next level", 'goToNextMap'),
@@ -220,9 +260,10 @@ const allCommands = [
     new numCommand("TCR: go level ", 'goToLevel'),
     new multiNumCommand("TCR: set sign ", 'setSignTime'),
     new numAndIdCommand("TCR: use ", 'useItem'),
-    new localFixedCommand("TCR: list", openModal),
+    //new localFixedCommand("TCR: list", openModal),
     new localFreeCommand(nickname + ": info", openModal),
     new localFreeCommand(nickname + ": map", openModal),
+    new idCommand("TCR: listen ", 'setWhosTurn'),
     new idCommand("TCR: go a2 ", 'teleportPlayerArea2'),
     new idCommand("TCR: go a1 ", 'teleportPlayerMainArea'),
     new idCommand("TCR: go a3 ", 'teleportPlayerArea3'),

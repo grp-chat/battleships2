@@ -3,7 +3,7 @@
     box-sizing: border-box;
 }
 
-body {
+/* body {
   animation: scroll 70s linear infinite;
   background: url("https://images.unsplash.com/photo-1465146633011-14f8e0781093?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=3450&q=80"), #111111;
   color: #eee;
@@ -32,11 +32,58 @@ body {
   .title {
     font-size: 5rem;
   }
+} */
+
+.maps {
+  display: flex;
 }
 
-/* body{
-    background-color: #111;
-} */
+.grid {
+  border-collapse: collapse;
+  display: inline-block;
+  margin-right: 5%;
+  margin-left: 10%;
+  display: inline;
+}
+
+.grid td {
+  cursor: pointer;
+  width: 60px;
+  height: 60px;
+  border: 1px solid #ccc;
+  text-align: center;
+  font-family: sans-serif;
+  font-size: 13px;
+  
+}
+
+.grid td.clicked {
+  background-color: yellow;
+  font-weight: bold;
+  color: red;
+}
+
+body {
+  background-image: url("https://naval-encyclopedia.com/wp-content/uploads/2019/07/wow-lepanto.jpg");
+  background-repeat: no-repeat;
+  background-position: top left;
+  /* background-size: 100% 100%; */
+  background-size: 1600px;
+  min-width: 300px;
+
+}
+
+.green {
+  background: rgba(0, 128, 0, 0.6);
+}
+.red {
+  background: rgba(255, 0, 0, 0.6);
+}
+.blue {
+  background: rgba(0, 0, 255, 0.6);
+}
+
+/* >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
 
 .details {
     width: 275px;

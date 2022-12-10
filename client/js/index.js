@@ -71,6 +71,8 @@ const modalHeader = document.getElementById('modal-title');
 const modalBody = document.getElementById('modal-body');
 
 var studentsArr;
+var connectedUsers;
+
 var triggerList = [];
 
 let matrixAreaRenderingHere = "";
@@ -80,6 +82,15 @@ let matrixLengthXAxis = 0;
 let matrixLengthYAxis = 0;
 let keySafe = false;
 //let obtainedPowersArr = [];
+
+var lastClicked;
+let whosTurn = "";
+let turnsPlayerTeam = "";
+let secretMode = false;
+let deployShipCoords = 0;
+let deployShipMap = null;
+let targetCoord = null;
+let targetMap = null;
 
 //GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG
 
@@ -172,6 +183,39 @@ function createChatDivs() {
     return chatSec;
 }
 
+function createInfoDiv() {
+    const infoSect = document.createElement("div");
+    infoSect.setAttribute("id", "infoSect");
+    infoSect.style.width = "272px";
+    infoSect.style.height = "270px";
+    //infoSect.style = "background:rgba(255, 255, 255, 0.5); color:black; overflow: auto;"
+    //infoSect.style.background = "rgba(255, 255, 255, 0.5)";
+    infoSect.style.color = "white";
+    infoSect.style.border = "1px solid white";
+    infoSect.style.position = "absolute";
+    infoSect.style.left = "1005px";
+    infoSect.style.top = "8px";
+    infoSect.innerHTML = ""
+    document.body.appendChild(infoSect);
+}
+function loadInfoDiv(connectedUsers, teamSlots) {
+    const infoSect = document.getElementById("infoSect");
+    infoSect.innerHTML = "<span class='green'>Connected Users:</span> <br>";
+    infoSect.innerHTML += `[ ${connectedUsers.join(", ")} ] <br>`;
+    infoSect.innerHTML += `<hr>`;
+    infoSect.innerHTML += "<span class='red'>Red Team:</span> <br>";
+    infoSect.innerHTML += `[ ${teamSlots["Red"].join(", ")} ] <br><br>`;
+    infoSect.innerHTML += `<span class='blue'>Blue Team:</span> <br>`;
+    infoSect.innerHTML += `[ ${teamSlots["Blue"].join(", ")} ] <br>`;
+    
+
+    // connectedUsers.forEach(connectedId => {
+    //     infoSect.innerHTML += `${connectedId}<br>`;
+    // });
+    
+
+}
+
 function appendMessage(message) {
     const messageDiv = document.createElement('div');
     messageDiv.innerText = message;
@@ -222,10 +266,6 @@ function closeModal() {
     modal.classList.remove('active');
     overlay.classList.remove('active');
 }
-// function updateModal(data) {
-//     modalHeader.innerHTML = data.head;
-//     modalBody.innerHTML = data.body;
-// }
 
 function clientRender(data) {
     const getPlayerObject = data.playersArr.find(object => object.id === nickname);
@@ -246,11 +286,182 @@ function clientRender(data) {
     clientRender.render();
     
 }
+//BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
 
+
+function clickableGrid(rows, cols, team, callback) {
+    var i = 0;
+    var grid = document.createElement('table');
+    grid.setAttribute("id", "tbl")
+    grid.className = 'grid';
+    grid.style = "color:white";
+
+    const teams = {
+        "red": { title: "Red Team's Map", style: "background:rgba(255, 0, 0, 0.6); color:white", mapName: "red" },
+        "blue": { title: "Blue Team's Map", style: "background:rgba(0, 0, 255, 0.6); color:white", mapName: "blue" },
+    }
+
+    const header = grid.appendChild(document.createElement('th'));
+    header.style = teams[team].style;
+    header.colSpan = 3;
+    header.innerHTML = teams[team].title;
+
+    const teamMap = teams[team].mapName;
+    for (var r = 0; r < rows; ++r) {
+        var tr = grid.appendChild(document.createElement('tr'));
+        for (var c = 0; c < cols; ++c) {
+            var cell = tr.appendChild(document.createElement('td'));
+            cell.innerHTML = ++i;
+            cell.setAttribute("id", `${teamMap}${i}`);
+            cell.addEventListener('click', (function (el, r, c, i, teamMap) {
+                return function () {
+                    callback(el, r, c, i, teamMap);
+                }
+            })(cell, r, c, i, teamMap), false);
+        }
+    }
+    return grid;
+}
+
+function checkIfThisUserCanClick(id) {
+    if (["TCR", whosTurn].indexOf(id) === -1) return false;
+    return true;
+}
+function checkifUserCanClickThisMap(teamMap, turnsPlayerTeam) {
+    const settings = {
+        "Red": "red",
+        "Blue": "blue",
+    }
+
+    if(teamMap === settings[turnsPlayerTeam]) return false;
+    return true;
+}
+
+function toggleOnAndOffThe2Cells(id) {
+    lastClicked.className = '';
+    document.getElementById(id).className = 'clicked';
+    lastClicked = document.getElementById(id);
+}
+
+function afterClickingTheGrid(el, row, col, i, teamMap) {
+    // console.log("You clicked on element:", el);
+    // console.log("You clicked on row:", row);
+    // console.log("You clicked on col:", col);
+    // console.log("You clicked on item #:", i);
+    // console.log("You clicked on map:", teamMap);
+    
+    // el.className = 'clicked';
+    // if (lastClicked) lastClicked.className = '';
+    // lastClicked = el;
+
+    if (!checkIfThisUserCanClick(nickname)) return;
+    if (!checkifUserCanClickThisMap(teamMap, turnsPlayerTeam)) return;
+    const cell = el.id
+    sock.emit('clickedGrid', { cell, i, teamMap });
+    
+}
+function clickGridDuringSecretMode(el, row, col, i, teamMap) {
+    // console.log("You clicked on element:", el);
+    // console.log("You clicked on row:", row);
+    // console.log("You clicked on col:", col);
+    // console.log("You clicked on item #:", i);
+    // console.log("You clicked on map:", teamMap);
+    
+    el.className = 'clicked';
+    if (lastClicked) lastClicked.className = '';
+    lastClicked = el;
+
+    deployShipCoords = i;
+    deployShipMap = teamMap;
+    
+}
+
+function getPlayerObject(playerId, playersObj) {
+    return Object.values(playersObj).find(obj => obj.id === playerId);
+}
+
+function secretModeFunction(playersArr, swapMode) {
+    secretMode = true;
+    document.body.style.backgroundImage = "url('https://image.api.playstation.com/vulcan/img/cfn/113073OFqK6aOGtChoaD10NjzN9CP9FrvkckXuENRrh660ikA_6I5hbRG9oaweerDRiOjduQhxEdElSwMYXJGVBcajAtZhgG.png')";
+
+    const playerObj = getPlayerObject(nickname, playersArr);
+
+    const settings = {
+        "Red": grid2,
+        "Blue": grid,
+    }
+
+    if (settings[playerObj.team] === undefined) {
+        grid.style.display = "none";
+        grid2.style.display = "none";
+        return;
+    }
+
+    if (nickname === "TCR" && swapMode === true) {
+        grid.style.display = "inline";
+        grid2.style.display = "inline";
+    } 
+
+    settings[playerObj.team].style.display = "none";
+
+    
+    
+}
+function offSecretMode(mainSystem) {
+    
+    secretMode = false;
+    document.body.style.backgroundImage = "url('https://naval-encyclopedia.com/wp-content/uploads/2019/07/wow-lepanto.jpg')"
+    if (lastClicked) lastClicked.className = '';
+
+    grid.style.display = "inline";
+    grid2.style.display = "inline";
+
+    const playerObj = getPlayerObject(nickname, mainSystem.playersArr);
+    const settings = {
+        "Red": "red",
+        "Blue": "blue",
+    }
+    
+    if (mainSystem.shipsLocations[settings[playerObj.team]] === undefined) return;
+    mainSystem.shipsLocations[settings[playerObj.team]].forEach(coords => {
+        document.getElementById(`${settings[playerObj.team]}${coords}`).innerHTML = coords;
+    });
+}
+
+
+//EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
+const grid = clickableGrid(5, 5, "red", function (el, row, col, i, teamMap) {
+    if (secretMode) {
+        clickGridDuringSecretMode(el, row, col, i, teamMap);
+    } else {
+        afterClickingTheGrid(el, row, col, i, teamMap);
+    }
+    
+    
+});
+
+const grid2 = clickableGrid(5, 5, "blue", function (el, row, col, i, teamMap) {
+    if (secretMode) {
+        clickGridDuringSecretMode(el, row, col, i, teamMap);
+    } else {
+        afterClickingTheGrid(el, row, col, i, teamMap);
+    }
+});
+
+// document.getElementById("redTeamMap").appendChild(grid);
+// document.getElementById("blueTeamMap").appendChild(grid2);
+document.body.appendChild(grid);
+document.body.appendChild(grid2);
+
+//document.getElementById("red1").className = 'clicked';
+lastClicked = document.getElementById("red1");
 
 //FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 
+
 createChatDivs();
+createInfoDiv();
+
 
 closeModalButton.addEventListener('click', () => {
     closeModal();
@@ -386,4 +597,123 @@ sock.on('sendMatrix', (data) => {
 sock.on('updatePowerArray', data => {
     
     loadObtainedPowersToModal(data.obtainedPowers, data.getTeam, data.getAwardedSteps);
+});
+
+sock.on('emitToAllUsersTheClickedCell', data => {
+    if (data === null) return;
+
+    toggleOnAndOffThe2Cells(data.cell);
+    targetCoord = data.i;
+    targetMap = data.teamMap;
+
+});
+
+sock.on('pushStudentsArr', data => {
+    studentsArr = data.studentIdArr;
+    loadInfoDiv(data.connectedUsers, data.teamSlots);
+
+});
+
+sock.on('setWhosTurnAtClient', data => {
+    whosTurn = data.id;
+    turnsPlayerTeam = data.team;
+
+});
+
+sock.on('secretModeAtClient', data => {
+    const swapMode = false;
+    secretModeFunction(data.playersArr, swapMode);
+});
+
+sock.on('offSecretModeAtClient', data => {
+    offSecretMode(data);
+});
+
+sock.on('updateDeployMap', data => {
+
+    const playerObj = getPlayerObject(nickname, data.playersArr);
+    const settings = {
+        "Red": "red",
+        "Blue": "blue",
+    }
+    if (settings[playerObj.team] === undefined) return;
+
+    data.shipsLocations[settings[playerObj.team]].forEach(coords => {
+        document.getElementById(`${settings[playerObj.team]}${coords}`).innerHTML = ""
+        const img = document.createElement('img');
+        img.src = "https://cdn4.iconfinder.com/data/icons/battlefield-3/340/battleship_warship_cannon_military_marine_ocean_battle-1024.png";
+        img.style = "width:35px;height:35px"
+        document.getElementById(`${settings[playerObj.team]}${coords}`).appendChild(img);
+
+    });
+    
+});
+
+sock.on('removeShipFromDeployMap', data => {
+    const cell = document.getElementById(`${data.deployShipMap}${data.deployShipCoords}`);
+    cell.innerHTML = data.deployShipCoords;
+});
+
+sock.on('updateTargetMapAtClient', data => {
+    const settings = {
+        "red": grid,
+        "blue": grid2,
+    }
+
+    //console.log(data.shipsLocations);
+
+    if (data.shipsLocations[data.targetMap].includes(data.targetCoord)) {
+        document.getElementById(`${data.targetMap}${data.targetCoord}`).innerHTML = "";
+        const img = document.createElement('img');
+        img.src = "https://cdn1.iconfinder.com/data/icons/food-4-9/128/Vigor_Fire-Hot-Flame-Burn-256.png";
+        img.style = "width:30px;height:30px"
+        document.getElementById(`${data.targetMap}${data.targetCoord}`).appendChild(img);
+    } else {
+        document.getElementById(`${data.targetMap}${data.targetCoord}`).innerHTML = "";
+        const img = document.createElement('img');
+        img.src = "https://cdn2.iconfinder.com/data/icons/funtime-objects-part-2/60/005_055_delete_cross_close_cancel_exit_vote-1024.png";
+        img.style = "width:30px;height:30px"
+        document.getElementById(`${data.targetMap}${data.targetCoord}`).appendChild(img);
+    }
+
+    
+});
+
+sock.on('revealAllAtClient', data => {
+    data["red"].forEach(coord => {
+        document.getElementById(`red${coord}`).innerHTML = "";
+        const img = document.createElement('img');
+        img.src = "https://cdn4.iconfinder.com/data/icons/battlefield-3/340/battleship_warship_cannon_military_marine_ocean_battle-1024.png";
+        img.style = "width:30px;height:30px";
+        document.getElementById(`red${coord}`).appendChild(img);
+
+    });
+    data["blue"].forEach(coord => {
+        document.getElementById(`blue${coord}`).innerHTML = "";
+        const img = document.createElement('img');
+        img.src = "https://cdn4.iconfinder.com/data/icons/battlefield-3/340/battleship_warship_cannon_military_marine_ocean_battle-1024.png";
+        img.style = "width:30px;height:30px";
+        document.getElementById(`blue${coord}`).appendChild(img);
+
+    });
+});
+
+sock.on('pushLocationsToTCR', data => {
+
+    if (data[targetMap].includes(targetCoord)) {
+        gDrv1 = "https://drive.google.com/file/d/1kL-6P-VordZC9O8upAx9hW_yPbXe9_BY/view?usp=sharing";
+        window.open(gDrv1, "_blank");
+
+        //console.log("Hit")
+    } else {
+        gDrv2 = "https://drive.google.com/file/d/15KRceSBG9Z-uTgGvDym33TsKoBlIJ1TO/view?usp=sharing"
+        window.open(gDrv2, "_blank");
+        //console.log("Miss")
+    }
+
+});
+
+sock.on('swapTCRMap', data => {
+    const swapMode = true;
+    secretModeFunction(data, swapMode);
 });
