@@ -38,10 +38,14 @@
   display: flex;
 }
 
+.buffer {
+  height: 70px;
+}
+
 .grid {
   border-collapse: collapse;
   display: inline-block;
-  margin-right: 5%;
+  /* margin-right: 3%; */
   margin-left: 10%;
   display: inline;
 }

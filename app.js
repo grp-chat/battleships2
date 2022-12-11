@@ -80,8 +80,8 @@ class MainSystem {
         }
 
         this.shipsLocations = {
-            "red": [20, 21],
-            "blue": [5, 6],
+            "red": [],
+            "blue": [],
         }
         this.allMisses = {
             "red": [],
@@ -124,8 +124,10 @@ io.sockets.on('connection', function (sock) {
         mainSystem.connectedUsers.push(data);
 
         io.emit('pushStudentsArr', mainSystem);
+
         if (mainSystem.secretMode) {
             io.emit('secretModeAtClient', mainSystem);
+            sock.emit('updateDeployMap', mainSystem);
         }
 
         const playerObj = mainSystem.getPlayerObject(data);
@@ -194,6 +196,13 @@ io.sockets.on('connection', function (sock) {
     });
 
     sock.on('setWhosTurn', data => {
+        //console.log(data);
+        if(data === undefined) {
+            mainSystem.whosTurn = "TCR";
+            io.emit('setWhosTurnAtClient', "TCR");
+            return;
+        }
+
         if (mainSystem.resultPending) {
             io.emit('chat-to-clients', `Failed - Map not updated!`);
             return;
@@ -225,7 +234,7 @@ io.sockets.on('connection', function (sock) {
         }
         
         if (mainSystem.shipsLocations[data.deployShipMap].includes(data.deployShipCoords)) {
-            io.emit('chat-to-clients', `${data.nickname} - Deploy invalid`);
+            io.emit('chat-to-clients', `${data.nickname} - Already have a ship here`);
             return;
         }
         if (mainSystem.shipsLocations[data.deployShipMap].length >= 5) {
@@ -289,6 +298,8 @@ io.sockets.on('connection', function (sock) {
     });
 
     sock.on('swapTCR', () => {
+        if (!mainSystem.secretMode) return;
+
         const playerObj = mainSystem.getPlayerObject("TCR");
         
         if (playerObj.team === "Red") {
@@ -304,10 +315,11 @@ io.sockets.on('connection', function (sock) {
             });
             mainSystem.teamSlots["Red"].push("TCR");
         }
-        console.log(playerObj);
-        console.log(mainSystem.teamSlots);
+        // console.log(playerObj);
+        // console.log(mainSystem.teamSlots);
         io.emit('pushStudentsArr', mainSystem);
         sock.emit('swapTCRMap', mainSystem.playersArr);
+        sock.emit('updateDeployMap', mainSystem);
     });
 
     sock.on('callLocations', () => {
